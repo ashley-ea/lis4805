@@ -1,0 +1,68 @@
+#1: load dataset: for my group members, remember to change the directory to where you saved the file
+kickstarter_projects <-read.csv("/Users/ashleyea/Desktop/ks-projects-201801.csv")
+head(kickstarter_projects) #i used this to look at original columns before cleaning
+
+#2: remove unneeded columns:
+kickstarter_projects <- subset(
+  kickstarter_projects,
+  select = -c(pledged, usd.pledged, usd_pledged_real, backers, goal, ID, name, currency)
+)
+
+#3: remame "category" to "subtype":
+colnames(kickstarter_projects)[colnames(kickstarter_projects) == "category"] <- "subtype"
+
+#4: "launched" & "deadline" columns as date data type
+kickstarter_projects$launched <- as.Date(kickstarter_projects$launched)
+kickstarter_projects$deadline <- as.Date(kickstarter_projects$deadline)
+
+#5: create new column “duration_days” from “launched” and “deadline” columns
+kickstarter_projects$duration_days <- as.numeric(
+  difftime(kickstarter_projects$deadline, kickstarter_projects$launched, units = "days")
+)
+
+#6: remove original "launched" and "deadline" columns
+kickstarter_projects <- subset(
+  kickstarter_projects,
+  select = -c(launched, deadline)
+)
+
+#7: remove rows where "state" column doesn't equal "successful" or "failed"
+kickstarter_projects <- subset(
+  kickstarter_projects,
+  state %in% c("successful", "failed")
+)
+
+#8: new column: "success" and populate with 0 or 1 based on "state" column (failed = 0 and successful = 1)
+kickstarter_projects$success <- ifelse(
+  kickstarter_projects$state == "successful", 1, 0
+)
+
+#9: remove state column
+kickstarter_projects <- subset(
+  kickstarter_projects,
+  select = -c(state)
+)
+
+#10: convert categorical columns to factor data type: "subtype, main_category, country, success"
+kickstarter_projects$subtype <- as.factor(kickstarter_projects$subtype)
+kickstarter_projects$main_category <- as.factor(kickstarter_projects$main_category)
+kickstarter_projects$country <- as.factor(kickstarter_projects$country)
+kickstarter_projects$success <- as.factor(kickstarter_projects$success)
+
+#11: check final results contain the below columns and data types:
+#subtype: factor
+#main_category: factor
+#country: factor
+#usd_goal_real: num
+#duration_days: num
+#success: factor
+str(kickstarter_projects)
+
+#the above prints:
+#'data.frame':	331675 obs. of  6 variables:
+#$ subtype      : Factor w/ 159 levels "3D Printing",..: 109 94 94 91 124 59 42 96 73 33 ...
+#$ main_category: Factor w/ 15 levels "Art","Comics",..: 13 7 7 11 8 8 8 13 11 3 ...
+#$ country      : Factor w/ 23 levels "AT","AU","BE",..: 10 23 23 23 23 23 23 4 23 23 ...
+#$ usd_goal_real: num  1534 30000 45000 5000 50000 ...
+#$ duration_days: num  59 60 45 30 35 20 45 30 30 30 ...
+#$ success      : Factor w/ 2 levels "0","1": 1 1 1 1 2 2 1 1 2 1 ...
